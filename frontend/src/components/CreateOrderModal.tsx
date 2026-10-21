@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Plus, Trash2, ShoppingCart, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { X, Plus, Trash2, ShoppingCart, AlertCircle, CheckCircle2, Loader2, Search } from 'lucide-react';
 import { Product, SalesOrder, OrderItemInput } from '../types';
 import { api, ApiError } from '../api/client';
 import { formatCurrency } from '../utils/format';
@@ -23,7 +23,35 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   const [availableStock, setAvailableStock] = useState<number | null>(null);
   const [createdOrder, setCreatedOrder] = useState<SalesOrder | null>(null);
 
-  const activeProducts = products.filter((p) => p.is_active);
+  // Full catalog state to prevent pagination limit (loads all active products)
+  const [catalog, setCatalog] = useState<Product[]>(products.filter((p) => p.is_active));
+  const [catalogSearch, setCatalogSearch] = useState<string>('');
+
+  useEffect(() => {
+    let isMounted = true;
+    api
+      .getProducts({ limit: 100, filter: 'active' })
+      .then((res) => {
+        if (isMounted && res.data && res.data.length > 0) {
+          setCatalog(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching full catalog for order placement:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredCatalog = catalogSearch.trim()
+    ? catalog.filter(
+        (p) =>
+          p.sku.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+          p.name.toLowerCase().includes(catalogSearch.toLowerCase())
+      )
+    : catalog;
 
   const handleAddItem = () => {
     setItems([...items, { sku: '', qty: 1 }]);
@@ -62,26 +90,21 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     }
 
     if (items.some((it) => it.qty <= 0)) {
-      setErrorMsg('All quantities must be greater than zero.');
+      setErrorMsg('Quantity for each item must be greater than zero.');
       return;
     }
 
-    // Check duplicate SKUs in UI first
-    const seen = new Set<string>();
-    for (const it of items) {
-      if (seen.has(it.sku)) {
-        setErrorMsg(`Duplicate SKU in order: '${it.sku}'. Merge them into a single line.`);
-        setFailedSKU(it.sku);
-        return;
-      }
-      seen.add(it.sku);
+    // Check duplicate SKUs in client before submitting
+    const skus = items.map((it) => it.sku);
+    const hasDuplicates = new Set(skus).size !== skus.length;
+    if (hasDuplicates) {
+      setErrorMsg('Duplicate SKUs found in order. Please consolidate quantities into one line item.');
+      return;
     }
 
     setSaving(true);
     try {
-      // Optional Idempotency key (Bonus feature)
-      const idempotencyKey = `order-req-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
+      const idempotencyKey = `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       const order = await api.createOrder(
         {
           customer: customer.trim(),
@@ -211,24 +234,55 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
             {/* Line Items */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Order Line Items (SKU & Quantity)
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Line Item</span>
-                </button>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Order Line Items ({items.length})
+                  </label>
+                  <p className="text-[11px] text-slate-500">Pick from complete catalog ({catalog.length} active SKUs)</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Quick Catalog Search Filter */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Filter SKU or name..."
+                      value={catalogSearch}
+                      onChange={(e) => setCatalogSearch(e.target.value)}
+                      className="w-44 pl-7 pr-6 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    />
+                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2 top-1/2 -translate-y-1/2" />
+                    {catalogSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setCatalogSearch('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-xs font-semibold text-emerald-400 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Item</span>
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-2.5">
                 {items.map((item, idx) => {
                   const isHighlightedFailure = failedSKU && item.sku === failedSKU;
-                  const selectedProd = products.find((p) => p.sku === item.sku);
+                  const selectedProd = catalog.find((p) => p.sku === item.sku);
+
+                  // Make sure current selected SKU is always visible even if filtered
+                  const rowOptions =
+                    selectedProd && !filteredCatalog.some((p) => p.sku === selectedProd.sku)
+                      ? [selectedProd, ...filteredCatalog]
+                      : filteredCatalog;
 
                   return (
                     <div
@@ -247,10 +301,10 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                           className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
                           required
                         >
-                          <option value="">-- Select Product SKU --</option>
-                          {activeProducts.map((p) => (
+                          <option value="">Select product SKU...</option>
+                          {rowOptions.map((p) => (
                             <option key={p.id} value={p.sku}>
-                              {p.sku} - {p.name} (Stock: {p.stock})
+                              {p.sku} | {p.name} (Stock: {p.stock})
                             </option>
                           ))}
                         </select>
