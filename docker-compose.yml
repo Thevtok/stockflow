@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database with Auto-Bootstrap Migrations & Seed Data
+  db:
+    image: postgres:16-alpine
+    container_name: stockflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stockflow
+    ports:
+      # Port 9522 (Far away from standard 5432 to prevent collisions)
+      - "${DB_PORT:-9522}:5432"
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stockflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stockflow_net
+
+  # 2. Go Backend Service (Gin + GORM + Concurrency Guard)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stockflow_backend
+    restart: unless-stopped
+    ports:
+      # Port 9521 (Far away from standard 8000/8080 to prevent collisions)
+      - "${BACKEND_PORT:-9521}:8080"
+    environment:
+      PORT: "8080"
+      ENV: "production"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_NAME: "stockflow"
+      DB_SSLMODE: "disable"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - stockflow_net
+
+  # 3. React Frontend Service (Vite + TypeScript + Nginx Reverse Proxy)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: stockflow_frontend
+    restart: unless-stopped
+    ports:
+      # Port 9520 (Far away from standard 3000/80 to prevent collisions)
+      - "${FRONTEND_PORT:-9520}:80"
+    depends_on:
+      - backend
+    networks:
+      - stockflow_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  stockflow_net:
+    driver: bridge
