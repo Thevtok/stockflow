@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { SummaryCards } from './components/SummaryCards';
+import { ExecutiveCommandSummary } from './components/ExecutiveCommandSummary';
 import { ProductsTable } from './components/ProductsTable';
 import { AdjustStockModal } from './components/AdjustStockModal';
 import { CreateOrderModal } from './components/CreateOrderModal';
@@ -147,33 +148,46 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Toast Alert Banner */}
+        {/* Floating Toast Notification */}
         {notification && (
           <div
-            className={`mb-5 p-4 rounded-xl border text-xs flex items-center justify-between shadow-lg transition-all ${
+            className={`fixed top-5 right-5 z-[9999] max-w-sm w-full p-4 rounded-xl border shadow-2xl backdrop-blur-md flex items-center justify-between gap-3 transition-all ${
               notification.type === 'success'
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                ? 'bg-slate-900/95 border-emerald-500/50 text-emerald-300 shadow-emerald-950/40'
+                : 'bg-slate-900/95 border-rose-500/50 text-rose-300 shadow-rose-950/40'
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              {notification.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              )}
-              <span className="font-medium">{notification.message}</span>
+            <div className="flex items-center gap-3">
+              <div
+                className={`p-2 rounded-lg shrink-0 ${
+                  notification.type === 'success'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-rose-500/20 text-rose-400'
+                }`}
+              >
+                {notification.type === 'success' ? (
+                  <CheckCircle2 className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-white text-xs">
+                  {notification.type === 'success' ? 'Action Successful' : 'Action Failed'}
+                </p>
+                <p className="text-slate-300 text-xs mt-0.5">{notification.message}</p>
+              </div>
             </div>
             <button
               onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-white ml-3 text-sm font-bold">
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors text-base leading-none">
               &times;
             </button>
           </div>
         )}
 
         {/* Section 1: Dashboard Summary Cards */}
-        <SummaryCards summary={summary} loading={summaryLoading} />
+        <ExecutiveCommandSummary summary={summary} products={products} onAdjustStock={(p) => setAdjustProduct(p)} loading={summaryLoading} />
 
         {/* Section 2: Products Catalog Table */}
         <ProductsTable
@@ -260,5 +274,7 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
+
 
 
