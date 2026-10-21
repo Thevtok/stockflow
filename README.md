@@ -25,7 +25,6 @@ StockFlow is an industrial-grade mini ERP inventory and sales ordering module en
 6. [cURL API Contract & Examples](#-curl-api-contract--examples)
 7. [Production Deployment & Live Demo](#-production-deployment--live-demo)
 8. [What I Would Improve Next](#-what-i-would-improve-next)
-9. [Honest Hours Spent](#-honest-hours-spent)
 
 ---
 
@@ -322,12 +321,3 @@ Given more time in a production roadmap, I would implement:
 3. **Distributed Locking (Redis Redlock):** If scaling horizontally across multiple database replicas, migrate from row-level locks to distributed locks to offload database transaction managers.
 4. **Role-Based Access Control (RBAC):** Differentiate permissions between Warehouse Floor Operators (adjust stock only) and Accounting / Sales Managers (create orders and view reports).
 
----
-
-## ⏱️ Honest Hours Spent
-
-- **Architecture, Data Modeling & SQL DDL:** 1.0 hour
-- **Go Backend API, GORM Transactions & Concurrency Guard:** 2.5 hours
-- **React Frontend, Tailwind Dark ERP Design & Cross-Stack Error States:** 2.5 hours
-- **Docker Compose Orchestration, Unit Tests & Documentation:** 1.0 hour
-- **Total Focused Effort:** **~7.0 hours** (Within the 6–8 hour practical test guideline).
