@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, ShoppingCart, AlertCircle, CheckCircle2, Loader2, Eye } from 'lucide-react';
 import { Product, SalesOrder, OrderItemInput } from '../types';
 import { api, ApiError } from '../api/client';
@@ -290,13 +290,13 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                           value={item.qty || ''}
                           onChange={(e) => handleItemChange(idx, 'qty', e.target.value)}
                           placeholder="Qty"
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-center text-white focus:outline-none focus:border-emerald-500"
+                          className="w-full h-10 px-3 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-center text-white focus:outline-none focus:border-emerald-500"
                           required
                         />
                       </div>
 
                       {/* Line Total Display */}
-                      <div className="w-28 text-right font-mono text-xs text-slate-400 hidden sm:block shrink-0">
+                      <div className="w-28 h-10 flex items-center justify-end text-right font-mono text-xs text-slate-400 hidden sm:flex shrink-0">
                         {selectedProd ? formatCurrency(selectedProd.price * item.qty) : '-'}
                       </div>
 
@@ -305,7 +305,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
                         disabled={items.length <= 1}
-                        className="p-2 text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-30 shrink-0"
+                        className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-30 shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

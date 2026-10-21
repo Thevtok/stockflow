@@ -1,6 +1,7 @@
-﻿import React from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Brain, AlertTriangle, CheckCircle2, ShieldCheck, ArrowUpRight, Zap } from 'lucide-react';
 import { DashboardSummary, Product } from '../types';
+import { api } from '../api/client';
 import { formatCurrency } from '../utils/format';
 
 interface ExecutiveCommandSummaryProps {
@@ -16,6 +17,26 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
   onAdjustStock,
   loading,
 }) => {
+  const [criticalItems, setCriticalItems] = useState<Product[]>(() => products.filter((p) => p.is_active && p.stock <= 10));
+
+  // Fetch all products that have low stock (<= 10) so all alert items are displayed
+  useEffect(() => {
+    if (summary && summary.low_stock_count > 0) {
+      api
+        .getProducts({ filter: 'low_stock', limit: 10 })
+        .then((res) => {
+          setCriticalItems(res.data);
+        })
+        .catch((err) => {
+          console.error('Failed to fetch low stock alert items:', err);
+          // Fallback to local filter if API fails
+          setCriticalItems(products.filter((p) => p.is_active && p.stock <= 10));
+        });
+    } else {
+      setCriticalItems([]);
+    }
+  }, [summary?.low_stock_count, products]);
+
   if (loading || !summary) {
     return (
       <div className="mb-6 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 animate-pulse">
@@ -31,11 +52,10 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
     );
   }
 
-  // Find the lowest stock active product for actionable quick-restock
-  const lowStockItems = products.filter((p) => p.is_active && p.stock <= 10);
-  const criticalProduct = [...lowStockItems].sort((a, b) => a.stock - b.stock)[0];
   const isCritical = summary.low_stock_count > 0;
-  const currentTime = new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }) + ' SGT';
+  const lowestItem = [...criticalItems].sort((a, b) => a.stock - b.stock)[0];
+  const currentTime =
+    new Date().toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' }) + ' SGT';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
@@ -84,8 +104,11 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
           {/* Dynamic Executive Narration Paragraph */}
           <div className="text-slate-300 text-xs sm:text-sm leading-relaxed space-y-2 mb-6">
             <p>
-              As of current operations, <strong className="text-white font-semibold">{summary.total_products} products</strong> are cataloged with{' '}
-              <strong className="text-emerald-400 font-semibold">{summary.active_products} active SKUs</strong> ready for sales order allocation. Total warehouse inventory asset valuation is securely tracked at{' '}
+              As of current operations,{' '}
+              <strong className="text-white font-semibold">{summary.total_products} products</strong>{' '}
+              are cataloged with{' '}
+              <strong className="text-emerald-400 font-semibold">{summary.active_products} active SKUs</strong>{' '}
+              ready for sales order allocation. Total warehouse inventory asset valuation is securely tracked at{' '}
               <strong className="text-white font-semibold font-mono">
                 {formatCurrency(summary.total_stock_value)}
               </strong>
@@ -95,16 +118,18 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
               {isCritical ? (
                 <>
                   <strong className="text-amber-400 font-semibold">Warehouse Alert:</strong> Detected{' '}
-                  <strong className="text-amber-300 font-semibold">{summary.low_stock_count} SKUs</strong> below the safety buffer threshold (≤ 10 units)
-                  {criticalProduct ? (
+                  <strong className="text-amber-300 font-semibold">{summary.low_stock_count} SKUs</strong>{' '}
+                  below the safety buffer threshold (≤ 10 units)
+                  {lowestItem ? (
                     <>
                       , with the lowest stock on{' '}
                       <span className="font-mono text-white underline decoration-amber-500/50">
-                        {criticalProduct.sku} ({criticalProduct.stock} units left)
+                        {lowestItem.sku} ({lowestItem.stock} units left)
                       </span>
                     </>
                   ) : null}
-                  . <strong className="text-slate-200">Recommendation:</strong> Schedule immediate stock intake to avoid checkout transaction rejections (HTTP 409 Insufficient Stock).
+                  .{' '}
+                  <strong className="text-slate-200">Recommendation:</strong> Schedule immediate stock intake to avoid checkout transaction rejections due to insufficient stock.
                 </>
               ) : (
                 <>
@@ -152,7 +177,7 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
       {/* 2. Priority Action & Alert Card (1 Col) */}
       <div className="rounded-2xl border border-slate-800/90 bg-slate-900/60 p-6 backdrop-blur-md shadow-sm flex flex-col justify-between">
         <div>
-          {/* Header */}
+          {/* Header with Alert Count */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <Zap className="w-4 h-4 text-amber-400" />
@@ -163,29 +188,43 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
                 isCritical ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'
               }`}
             >
-              {isCritical ? summary.low_stock_count : 0}
+              {summary.low_stock_count}
             </span>
           </div>
 
-          {/* Action Box */}
-          {isCritical && criticalProduct ? (
-            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-3">
-              <div className="flex items-center gap-1.5 text-rose-400 text-xs font-bold uppercase tracking-wider">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Critical Stock Deficit</span>
+          {/* Action Box: List of All Alert Items */}
+          {isCritical && criticalItems.length > 0 ? (
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-bold uppercase tracking-wider">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>Critical Stock Deficit ({criticalItems.length} SKUs ≤ 10)</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Item <strong className="text-white font-mono">{criticalProduct.sku}</strong> ({criticalProduct.name}) has only{' '}
-                <strong className="text-rose-400 font-bold">{criticalProduct.stock} units</strong> remaining. Any checkout order exceeding this will be rejected atomically.
-              </p>
-              <div className="pt-1">
-                <button
-                  onClick={() => onAdjustStock(criticalProduct)}
-                  className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg shadow-md transition-all group"
-                >
-                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  <span>Restock {criticalProduct.sku} Now</span>
-                </button>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {criticalItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-mono font-bold text-white shrink-0">{item.sku}</span>
+                        <span className="text-slate-500 shrink-0">|</span>
+                        <span className="text-slate-300 truncate font-medium">{item.name}</span>
+                      </div>
+                      <p className="text-[11px] text-rose-300/80 mt-0.5 font-mono">
+                        Stock: <strong className="text-rose-300 font-bold">{item.stock} units left</strong>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onAdjustStock(item)}
+                      className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold rounded-lg shadow-sm transition-all"
+                    >
+                      <ArrowUpRight className="w-3 h-3" />
+                      <span>Restock</span>
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
