@@ -7,17 +7,17 @@ services:
     container_name: stockflow_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: stockflow
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-stockflow}
     ports:
-      # Port 9522 (Far away from standard 5432 to prevent collisions)
-      - "${DB_PORT:-9522}:5432"
+      # Bound strictly to loopback interface 127.0.0.1 (Never exposed to public internet)
+      - "127.0.0.1:${DB_PORT:-9522}:5432"
     volumes:
       - ./database/init:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d stockflow"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-stockflow}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -32,16 +32,16 @@ services:
     container_name: stockflow_backend
     restart: unless-stopped
     ports:
-      # Port 9521 (Far away from standard 8000/8080 to prevent collisions)
-      - "${BACKEND_PORT:-9521}:8080"
+      # Bound strictly to loopback interface 127.0.0.1 (Reverse-proxied via Host Nginx)
+      - "127.0.0.1:${BACKEND_PORT:-9521}:8080"
     environment:
       PORT: "8080"
-      ENV: "production"
+      ENV: ${ENV:-production}
       DB_HOST: "db"
       DB_PORT: "5432"
-      DB_USER: "postgres"
-      DB_PASSWORD: "postgres"
-      DB_NAME: "stockflow"
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-stockflow}
       DB_SSLMODE: "disable"
     depends_on:
       db:
@@ -57,8 +57,8 @@ services:
     container_name: stockflow_frontend
     restart: unless-stopped
     ports:
-      # Port 9520 (Far away from standard 3000/80 to prevent collisions)
-      - "${FRONTEND_PORT:-9520}:80"
+      # Bound strictly to loopback interface 127.0.0.1 (Reverse-proxied via Host Nginx)
+      - "127.0.0.1:${FRONTEND_PORT:-9520}:80"
     depends_on:
       - backend
     networks:

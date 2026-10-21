@@ -1,4 +1,4 @@
-# StockFlow — Inventory & Sales Management (Mini ERP)
+# StockFlow â€” Inventory & Sales Management (Mini ERP)
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
@@ -7,11 +7,11 @@
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://www.docker.com)
 
-StockFlow is an industrial-grade mini ERP inventory and sales ordering module engineered for warehouse supervisors. It provides an end-to-end vertical slice: **PostgreSQL 16 Database → Go API Service (Gin + GORM) → React TypeScript UI (Vite + Tailwind)**, designed with strict concurrency safety, deadlock prevention, atomic transaction rollbacks, and cross-stack error handling.
+StockFlow is an industrial-grade mini ERP inventory and sales ordering module engineered for warehouse supervisors. It provides an end-to-end vertical slice: **PostgreSQL 16 Database â†’ Go API Service (Gin + GORM) â†’ React TypeScript UI (Vite + Tailwind)**, designed with strict concurrency safety, deadlock prevention, atomic transaction rollbacks, and cross-stack error handling.
 
 ---
 
-## 📑 Table of Contents
+## ðŸ“‘ Table of Contents
 
 1. [Architectural Decisions & Concurrency Model](#-architectural-decisions--concurrency-model)
 2. [Repository Layout](#-repository-layout)
@@ -25,12 +25,12 @@ StockFlow is an industrial-grade mini ERP inventory and sales ordering module en
 
 ---
 
-## 🏛️ Architectural Decisions & Concurrency Model
+## ðŸ›ï¸ Architectural Decisions & Concurrency Model
 
 ### 1. Data Safety Under High Concurrency (Zero Negative Stock)
 A common pitfall in inventory management is the `SELECT-then-UPDATE` anti-pattern:
 ```go
-// ❌ UNSAFE: Vulnerable to race conditions under concurrent orders
+// âŒ UNSAFE: Vulnerable to race conditions under concurrent orders
 db.Where("sku = ?", sku).First(&prod)
 if prod.Stock < reqQty { return err }
 prod.Stock -= reqQty
@@ -71,43 +71,43 @@ When an order contains multiple line items:
 
 ---
 
-## 📂 Repository Layout
+## ðŸ“‚ Repository Layout
 
 ```text
 stockflow/
-├── backend/
-│   ├── cmd/api/main.go            # Application entrypoint & graceful shutdown
-│   ├── internal/
-│   │   ├── config/                # Environment variables & DSN parser
-│   │   ├── database/              # GORM PostgreSQL connection pool setup
-│   │   ├── domain/                # Core entities, DTOs, and typed AppErrors
-│   │   ├── handler/               # HTTP REST handlers, envelopes & responses
-│   │   ├── middleware/            # CORS & panic recovery middlewares
-│   │   └── repository/            # GORM database queries, locking & transactions
-│   ├── Dockerfile                 # Multi-stage minimal Alpine Go image (18MB)
-│   ├── go.mod & go.sum            # Pinned Go module dependencies
-│   └── tests/                     # Unit & concurrency test suites
-├── database/
-│   └── init/
-│       ├── 01_schema.sql          # PostgreSQL DDL with strict CHECK constraints
-│       └── 02_seed.sql            # 15 realistic quartz catalog items & history
-├── frontend/
-│   ├── src/
-│   │   ├── api/client.ts          # Centralized API client & typed error parsing
-│   │   ├── components/            # Modular UI: SummaryCards, Table, Modals
-│   │   ├── hooks/                 # useDebounce hook
-│   │   ├── types/                 # Shared TypeScript domain & API interfaces
-│   │   └── utils/                 # Currency formatters & relative date helpers
-│   ├── Dockerfile                 # Multi-stage Node builder + Nginx Alpine
-│   ├── nginx.conf                 # Internal reverse proxy for /api routes
-│   └── vitest.config.ts           # Vitest unit test runner
-├── docker-compose.yml             # Full-stack multi-container orchestration
-└── README.md                      # Comprehensive engineering documentation
+â”œâ”€â”€ backend/
+â”‚   â”œâ”€â”€ cmd/api/main.go            # Application entrypoint & graceful shutdown
+â”‚   â”œâ”€â”€ internal/
+â”‚   â”‚   â”œâ”€â”€ config/                # Environment variables & DSN parser
+â”‚   â”‚   â”œâ”€â”€ database/              # GORM PostgreSQL connection pool setup
+â”‚   â”‚   â”œâ”€â”€ domain/                # Core entities, DTOs, and typed AppErrors
+â”‚   â”‚   â”œâ”€â”€ handler/               # HTTP REST handlers, envelopes & responses
+â”‚   â”‚   â”œâ”€â”€ middleware/            # CORS & panic recovery middlewares
+â”‚   â”‚   â””â”€â”€ repository/            # GORM database queries, locking & transactions
+â”‚   â”œâ”€â”€ Dockerfile                 # Multi-stage minimal Alpine Go image (18MB)
+â”‚   â”œâ”€â”€ go.mod & go.sum            # Pinned Go module dependencies
+â”‚   â””â”€â”€ tests/                     # Unit & concurrency test suites
+â”œâ”€â”€ database/
+â”‚   â””â”€â”€ init/
+â”‚       â”œâ”€â”€ 01_schema.sql          # PostgreSQL DDL with strict CHECK constraints
+â”‚       â””â”€â”€ 02_seed.sql            # 15 realistic quartz catalog items & history
+â”œâ”€â”€ frontend/
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ api/client.ts          # Centralized API client & typed error parsing
+â”‚   â”‚   â”œâ”€â”€ components/            # Modular UI: SummaryCards, Table, Modals
+â”‚   â”‚   â”œâ”€â”€ hooks/                 # useDebounce hook
+â”‚   â”‚   â”œâ”€â”€ types/                 # Shared TypeScript domain & API interfaces
+â”‚   â”‚   â””â”€â”€ utils/                 # Currency formatters & relative date helpers
+â”‚   â”œâ”€â”€ Dockerfile                 # Multi-stage Node builder + Nginx Alpine
+â”‚   â”œâ”€â”€ nginx.conf                 # Internal reverse proxy for /api routes
+â”‚   â””â”€â”€ vitest.config.ts           # Vitest unit test runner
+â”œâ”€â”€ docker-compose.yml             # Full-stack multi-container orchestration
+â””â”€â”€ README.md                      # Comprehensive engineering documentation
 ```
 
 ---
 
-## 🚀 Quick Start with Docker Compose (Recommended)
+## ðŸš€ Quick Start with Docker Compose (Recommended)
 
 StockFlow runs with a single command. It spins up PostgreSQL 16 (auto-applying migrations and seeds), the Go backend, and the React frontend.
 
@@ -131,7 +131,7 @@ Within seconds:
 
 ---
 
-## 💻 Manual Local Development Setup
+## ðŸ’» Manual Local Development Setup
 
 If you prefer running services natively:
 
@@ -160,7 +160,7 @@ npm run dev
 
 ---
 
-## 🧪 Running Test Suites
+## ðŸ§ª Running Test Suites
 
 ### Backend Tests (Validation & Domain Logic)
 ```bash
@@ -184,7 +184,7 @@ npm test
 
 ---
 
-## 📡 cURL API Contract & Examples
+## ðŸ“¡ cURL API Contract & Examples
 
 ### 1. List Products (Search & Filter)
 ```bash
@@ -292,7 +292,7 @@ curl -X GET "http://localhost:9521/api/reports/daily-sales?date=2026-10-21"
 
 ---
 
-## 🌐 Production Deployment & Live Demo
+## ðŸŒ Production Deployment & Live Demo
 
 StockFlow is containerized and deployed on a Linux Cloud VPS behind an Nginx reverse proxy with automated SSL certificates:
 - **Live Demo URL:** `https://stockflow.kardia.id` (or evaluation domain)
@@ -310,7 +310,7 @@ StockFlow is containerized and deployed on a Linux Cloud VPS behind an Nginx rev
 
 ---
 
-## 🔮 What I Would Improve Next
+## ðŸ”® What I Would Improve Next
 
 Given more time in a production roadmap, I would implement:
 1. **Real-time Inventory Sync (WebSockets / SSE):** Push stock decrements to all open warehouse supervisor screens in real time so supervisors see stock badges update without polling.
@@ -320,10 +320,10 @@ Given more time in a production roadmap, I would implement:
 
 ---
 
-## ⏱️ Honest Hours Spent
+## â±ï¸ Honest Hours Spent
 
 - **Architecture, Data Modeling & SQL DDL:** 1.0 hour
 - **Go Backend API, GORM Transactions & Concurrency Guard:** 2.5 hours
 - **React Frontend, Tailwind Dark ERP Design & Cross-Stack Error States:** 2.5 hours
 - **Docker Compose Orchestration, Unit Tests & Documentation:** 1.0 hour
-- **Total Focused Effort:** **~7.0 hours** (Within the 6–8 hour practical test guideline).
+- **Total Focused Effort:** **~7.0 hours** (Within the 6â€“8 hour practical test guideline).
