@@ -159,7 +159,7 @@ export const App: React.FC = () => {
         onOpenCreateOrder={() => setShowCreateOrder(true)}
         onOpenCreateProduct={() => setShowCreateProduct(true)}
         onOpenReport={() => setShowReport(true)}
-        onLookupOrder={handleLookupOrder}
+
       />
 
       {/* Main Container */}

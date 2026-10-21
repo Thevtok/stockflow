@@ -1,30 +1,17 @@
-import React, { useState } from 'react';
-import { Boxes, ShoppingCart, BarChart3, Search, ShieldCheck } from 'lucide-react';
+﻿import React from 'react';
+import { Boxes, ShoppingCart, BarChart3, Plus, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
   onOpenCreateOrder: () => void;
   onOpenCreateProduct: () => void;
   onOpenReport: () => void;
-  onLookupOrder: (orderId: number) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreateOrder,
   onOpenCreateProduct,
   onOpenReport,
-  onLookupOrder,
 }) => {
-  const [lookupId, setLookupId] = useState('');
-
-  const handleLookupSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const id = parseInt(lookupId.trim(), 10);
-    if (!isNaN(id) && id > 0) {
-      onLookupOrder(id);
-      setLookupId('');
-    }
-  };
-
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -49,23 +36,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Quick Order Lookup Input */}
-        <form onSubmit={handleLookupSubmit} className="hidden md:flex items-center">
-          <div className="relative">
-            <input
-              type="number"
-              placeholder="Look up Order #..."
-              value={lookupId}
-              onChange={(e) => setLookupId(e.target.value)}
-              className="w-40 pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-            />
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          </div>
-        </form>
-
         {/* Action Controls */}
         <div className="flex items-center gap-2.5">
-          <button onClick={onOpenCreateProduct} className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium transition-colors"><span>+ Add SKU</span></button> <button
+          <button
+            onClick={onOpenCreateProduct}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5 text-slate-400" />
+            <span>Add SKU</span>
+          </button>
+
+          <button
             onClick={onOpenReport}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium transition-colors"
           >
