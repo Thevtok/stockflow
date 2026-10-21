@@ -1,20 +1,6 @@
-# Stage 1: Build React static assets
-FROM node:20-alpine AS builder
+﻿FROM nginx:alpine
 
-WORKDIR /app
-
-ENV NODE_ENV=development
-
-COPY package.json ./
-RUN npm install
-
-COPY . .
-RUN npx vite build
-
-# Stage 2: Minimal Nginx web server
-FROM nginx:alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
