@@ -3,22 +3,18 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Copy dependency definitions
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Copy application source code
+# Copy all source code including pre-vendored dependencies
 COPY . .
 
-# Compile optimized static binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app/bin/server ./cmd/api
+# Compile optimized static binary using vendored modules (Zero network required)
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -ldflags="-w -s" -o /app/bin/server ./cmd/api
 
 # Final Minimal Runtime Stage
 FROM alpine:3.20
 
 WORKDIR /app
 
-# Copy SSL certificates and timezone directly from builder (Zero apk network calls needed)
+# Copy SSL certificates directly from builder
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENV TZ=Asia/Jakarta
