@@ -91,3 +91,14 @@ func (h *OrderHandler) CancelOrder(c *gin.Context) {
 
 	c.JSON(http.StatusOK, cancelledOrder)
 }
+
+// ListOrders godoc
+// GET /api/orders
+func (h *OrderHandler) ListOrders(c *gin.Context) {
+	orders, err := h.repo.ListOrders()
+	if err != nil {
+		RespondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": orders})
+}

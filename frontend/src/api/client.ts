@@ -1,4 +1,4 @@
-import {
+﻿import {
   Product,
   StockMovement,
   SalesOrder,
@@ -137,6 +137,10 @@ export const api = {
   },
 
   // Orders
+  async getOrders(): Promise<{ data: SalesOrder[] }> {
+    return request<{ data: SalesOrder[] }>('/orders');
+  },
+
   async createOrder(payload: CreateOrderPayload, idempotencyKey?: string): Promise<SalesOrder> {
     const headers: Record<string, string> = {};
     if (idempotencyKey) {

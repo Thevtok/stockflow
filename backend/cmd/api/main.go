@@ -70,6 +70,7 @@ func main() {
 		api.GET("/products/:id/movements", productHandler.GetProductMovements)
 
 		// Orders
+		api.GET("/orders", orderHandler.ListOrders)
 		api.POST("/orders", orderHandler.CreateOrder)
 		api.GET("/orders/:id", orderHandler.GetOrder)
 		api.POST("/orders/:id/cancel", orderHandler.CancelOrder)

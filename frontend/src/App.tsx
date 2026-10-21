@@ -1,8 +1,8 @@
 ﻿import React, { useEffect, useState, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
-import { SummaryCards } from './components/SummaryCards';
 import { ExecutiveCommandSummary } from './components/ExecutiveCommandSummary';
 import { ProductsTable } from './components/ProductsTable';
+import { OrdersTable } from './components/OrdersTable';
 import { AdjustStockModal } from './components/AdjustStockModal';
 import { CreateOrderModal } from './components/CreateOrderModal';
 import { OrderDetailModal } from './components/OrderDetailModal';
@@ -12,14 +12,21 @@ import { DailyReportModal } from './components/DailyReportModal';
 import { useDebounce } from './hooks/useDebounce';
 import { Product, DashboardSummary, SalesOrder, ProductFilterType } from './types';
 import { api, ApiError } from './api/client';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Package, ShoppingBag } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // Navigation Tabs State
+  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+
   // Catalog State
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Orders State
+  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
 
   // Search & Filter State
   const [search, setSearch] = useState<string>('');
@@ -86,6 +93,19 @@ export const App: React.FC = () => {
     }
   }, [debouncedSearch, filter, page]);
 
+  // Fetch All Orders
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await api.getOrders();
+      setOrders(res.data || []);
+    } catch (err: any) {
+      console.error('Failed to fetch sales orders list:', err);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -93,6 +113,10 @@ export const App: React.FC = () => {
   useEffect(() => {
     fetchSummary();
   }, [fetchSummary]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Reset page when filter or search changes
   useEffect(() => {
@@ -109,26 +133,18 @@ export const App: React.FC = () => {
     }
   };
 
-  // Delete Product Handler (Verifies 409 PRODUCT_HAS_HISTORY)
-  const handleDeleteProduct = async (product: Product) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete SKU '${product.sku}'? Products with stock movements history cannot be deleted.`
-      )
-    ) {
-      return;
-    }
-
+  // Soft Delete Product Handler
+  const handleDeleteProduct = async (id: number) => {
     try {
-      await api.deleteProduct(product.id);
-      showToast('success', `Product '${product.sku}' was deleted.`);
+      await api.deleteProduct(id);
+      showToast('success', 'Product deactivated from active catalog.');
       fetchProducts();
       fetchSummary();
     } catch (err: any) {
       if (err instanceof ApiError && err.code === 'PRODUCT_HAS_HISTORY') {
         showToast(
           'error',
-          `Cannot delete '${product.sku}': Product has immutable movement history in warehouse ledger.`
+          'Cannot delete product: Stock movement audit ledger exists for this SKU.'
         );
       } else {
         showToast('error', err.message || 'Failed to delete product.');
@@ -137,7 +153,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
       {/* Top Navbar */}
       <Navbar
         onOpenCreateOrder={() => setShowCreateOrder(true)}
@@ -186,28 +202,80 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Section 1: Dashboard Summary Cards */}
-        <ExecutiveCommandSummary summary={summary} products={products} onAdjustStock={(p) => setAdjustProduct(p)} loading={summaryLoading} />
-
-        {/* Section 2: Products Catalog Table */}
-        <ProductsTable
+        {/* Section 1: Executive Command Summary */}
+        <ExecutiveCommandSummary
+          summary={summary}
           products={products}
-          total={total}
-          loading={loading}
-          error={error}
-          search={search}
-          onSearchChange={setSearch}
-          filter={filter}
-          onFilterChange={setFilter}
-          page={page}
-          limit={limit}
-          onPageChange={setPage}
-          onRetry={fetchProducts}
           onAdjustStock={(p) => setAdjustProduct(p)}
-          onViewHistory={(p) => setHistoryProduct(p)}
-          onDeleteProduct={handleDeleteProduct}
-          onCreateProduct={() => setShowCreateProduct(true)}
+          loading={summaryLoading}
         />
+
+        {/* Section 2: Tab Navigation (Catalog vs Orders) */}
+        <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('products')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'products'
+                  ? 'bg-slate-800 text-white border border-slate-700 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+              }`}
+            >
+              <Package className="w-4 h-4 text-emerald-400" />
+              <span>Inventory Catalog</span>
+              <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-slate-900 border border-slate-800 font-mono text-slate-300">
+                {total}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('orders');
+                fetchOrders();
+              }}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                activeTab === 'orders'
+                  ? 'bg-slate-800 text-white border border-slate-700 shadow-md'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4 text-sky-400" />
+              <span>Sales Orders History</span>
+              <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-slate-900 border border-slate-800 font-mono text-emerald-400">
+                {orders.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Section 3: Active View Component */}
+        {activeTab === 'products' ? (
+          <ProductsTable
+            products={products}
+            total={total}
+            loading={loading}
+            error={error}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            page={page}
+            limit={limit}
+            onPageChange={setPage}
+            onRetry={fetchProducts}
+            onAdjustStock={(p) => setAdjustProduct(p)}
+            onViewHistory={(p) => setHistoryProduct(p)}
+            onDeleteProduct={handleDeleteProduct}
+            onCreateProduct={() => setShowCreateProduct(true)}
+          />
+        ) : (
+          <OrdersTable
+            orders={orders}
+            loading={ordersLoading}
+            onViewOrder={(order) => setSelectedOrder(order)}
+          />
+        )}
       </main>
 
       {/* Footer */}
@@ -227,6 +295,7 @@ export const App: React.FC = () => {
             showToast('success', `Stock adjusted for SKU ${adjustProduct.sku}`);
             fetchProducts();
             fetchSummary();
+            fetchOrders();
           }}
         />
       )}
@@ -239,6 +308,11 @@ export const App: React.FC = () => {
             showToast('success', `Order #${order.id} placed! Stock deducted atomically.`);
             fetchProducts();
             fetchSummary();
+            fetchOrders();
+          }}
+          onViewOrder={(order) => {
+            setShowCreateOrder(false);
+            setSelectedOrder(order);
           }}
         />
       )}
@@ -251,6 +325,7 @@ export const App: React.FC = () => {
             showToast('success', `Order #${cancelled.id} cancelled! Stock restored.`);
             fetchProducts();
             fetchSummary();
+            fetchOrders();
           }}
         />
       )}
@@ -274,7 +349,3 @@ export const App: React.FC = () => {
     </div>
   );
 };
-
-
-
-

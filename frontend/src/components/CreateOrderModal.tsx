@@ -1,19 +1,22 @@
-﻿import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, ShoppingCart, AlertCircle, CheckCircle2, Loader2, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Trash2, ShoppingCart, AlertCircle, CheckCircle2, Loader2, Eye } from 'lucide-react';
 import { Product, SalesOrder, OrderItemInput } from '../types';
 import { api, ApiError } from '../api/client';
 import { formatCurrency } from '../utils/format';
+import { SearchableSelect } from './SearchableSelect';
 
 interface CreateOrderModalProps {
   products: Product[];
   onClose: () => void;
   onOrderCreated: (order: SalesOrder) => void;
+  onViewOrder?: (order: SalesOrder) => void;
 }
 
 export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   products,
   onClose,
   onOrderCreated,
+  onViewOrder,
 }) => {
   const [customer, setCustomer] = useState<string>('');
   const [items, setItems] = useState<OrderItemInput[]>([{ sku: '', qty: 1 }]);
@@ -25,7 +28,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   // Full catalog state to prevent pagination limit (loads all active products)
   const [catalog, setCatalog] = useState<Product[]>(products.filter((p) => p.is_active));
-  const [catalogSearch, setCatalogSearch] = useState<string>('');
 
   useEffect(() => {
     let isMounted = true;
@@ -44,14 +46,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
       isMounted = false;
     };
   }, []);
-
-  const filteredCatalog = catalogSearch.trim()
-    ? catalog.filter(
-        (p) =>
-          p.sku.toLowerCase().includes(catalogSearch.toLowerCase()) ||
-          p.name.toLowerCase().includes(catalogSearch.toLowerCase())
-      )
-    : catalog;
 
   const handleAddItem = () => {
     setItems([...items, { sku: '', qty: 1 }]);
@@ -85,7 +79,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     }
 
     if (items.some((it) => !it.sku)) {
-      setErrorMsg('Please select a SKU for each item in the order.');
+      setErrorMsg('Please select a product for each line item.');
       return;
     }
 
@@ -118,14 +112,13 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     } catch (err: any) {
       if (err instanceof ApiError) {
         if (err.code === 'INSUFFICIENT_STOCK') {
-          // Explicit cross-stack 409 highlighting
           setErrorMsg(
-            `Order Rejected (HTTP 409): Insufficient stock for SKU '${err.sku}'.`
+            `Insufficient stock for SKU '${err.sku}'.`
           );
           if (err.sku) setFailedSKU(err.sku);
           if (err.available !== undefined) setAvailableStock(err.available);
         } else if (err.code === 'VALIDATION_ERROR') {
-          setErrorMsg(`Validation Error (HTTP 400): ${err.message}`);
+          setErrorMsg(`${err.message}`);
         } else {
           setErrorMsg(err.message);
         }
@@ -188,10 +181,25 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               </p>
             </div>
 
-            <div className="pt-4">
+            {/* Actions on Success: View Order (Cancel / Restock) or Done */}
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+              {onViewOrder && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onViewOrder(createdOrder);
+                  }}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs rounded-xl border border-slate-700 shadow-md transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4 text-emerald-400" />
+                  <span>View Order #{createdOrder.id} Details & Actions</span>
+                </button>
+              )}
               <button
+                type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors"
+                className="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition-colors"
               >
                 Done & Return to Catalog
               </button>
@@ -234,55 +242,27 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
             {/* Line Items */}
             <div>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center justify-between mb-2.5">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                     Order Line Items ({items.length})
                   </label>
-                  <p className="text-[11px] text-slate-500">Pick from complete catalog ({catalog.length} active SKUs)</p>
+                  <p className="text-[11px] text-slate-500">Searchable dropdown across all {catalog.length} catalog items</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {/* Quick Catalog Search Filter */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Filter SKU or name..."
-                      value={catalogSearch}
-                      onChange={(e) => setCatalogSearch(e.target.value)}
-                      className="w-44 pl-7 pr-6 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    />
-                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2 top-1/2 -translate-y-1/2" />
-                    {catalogSearch && (
-                      <button
-                        type="button"
-                        onClick={() => setCatalogSearch('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-bold"
-                      >
-                        &times;
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddItem}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-xs font-semibold text-emerald-400 transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Item</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-xs font-semibold text-emerald-400 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Line Item</span>
+                </button>
               </div>
 
               <div className="space-y-2.5">
                 {items.map((item, idx) => {
                   const isHighlightedFailure = failedSKU && item.sku === failedSKU;
                   const selectedProd = catalog.find((p) => p.sku === item.sku);
-
-                  // Make sure current selected SKU is always visible even if filtered
-                  const rowOptions =
-                    selectedProd && !filteredCatalog.some((p) => p.sku === selectedProd.sku)
-                      ? [selectedProd, ...filteredCatalog]
-                      : filteredCatalog;
 
                   return (
                     <div
@@ -293,25 +273,16 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                           : 'bg-slate-950 border-slate-800'
                       }`}
                     >
-                      {/* SKU Select */}
-                      <div className="flex-1">
-                        <select
-                          value={item.sku}
-                          onChange={(e) => handleItemChange(idx, 'sku', e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500"
-                          required
-                        >
-                          <option value="">Select product SKU...</option>
-                          {rowOptions.map((p) => (
-                            <option key={p.id} value={p.sku}>
-                              {p.sku} | {p.name} (Stock: {p.stock})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {/* Searchable Combobox Component */}
+                      <SearchableSelect
+                        value={item.sku}
+                        onChange={(sku) => handleItemChange(idx, 'sku', sku)}
+                        options={catalog}
+                        hasError={Boolean(isHighlightedFailure)}
+                      />
 
                       {/* Quantity Input */}
-                      <div className="w-24">
+                      <div className="w-24 shrink-0">
                         <input
                           type="number"
                           min="1"
@@ -324,8 +295,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                         />
                       </div>
 
-                      {/* Line Unit Price Display (Informational only - server computes) */}
-                      <div className="w-28 text-right font-mono text-xs text-slate-400 hidden sm:block">
+                      {/* Line Total Display */}
+                      <div className="w-28 text-right font-mono text-xs text-slate-400 hidden sm:block shrink-0">
                         {selectedProd ? formatCurrency(selectedProd.price * item.qty) : '-'}
                       </div>
 
@@ -334,7 +305,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                         type="button"
                         onClick={() => handleRemoveItem(idx)}
                         disabled={items.length <= 1}
-                        className="p-2 text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-30"
+                        className="p-2 text-slate-500 hover:text-rose-400 rounded-lg transition-colors disabled:opacity-30 shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

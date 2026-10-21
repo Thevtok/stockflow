@@ -15,6 +15,7 @@ import (
 type OrderRepository interface {
 	CreateOrder(req domain.CreateOrderRequest, idempotencyKey *string) (*domain.SalesOrder, error)
 	FindByID(id uint) (*domain.SalesOrder, error)
+	ListOrders() ([]domain.SalesOrder, error)
 	CancelOrder(id uint) (*domain.SalesOrder, error)
 }
 
@@ -215,4 +216,10 @@ func (r *orderRepository) CancelOrder(id uint) (*domain.SalesOrder, error) {
 	}
 
 	return &cancelledOrder, nil
+}
+
+func (r *orderRepository) ListOrders() ([]domain.SalesOrder, error) {
+	var orders []domain.SalesOrder
+	err := r.db.Preload("Items").Order("id DESC").Find(&orders).Error
+	return orders, err
 }
