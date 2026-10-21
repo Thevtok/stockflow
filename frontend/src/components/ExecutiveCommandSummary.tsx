@@ -25,7 +25,7 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
       api
         .getProducts({ filter: 'low_stock', limit: 10 })
         .then((res) => {
-          setCriticalItems(res.data);
+          setCriticalItems(res.data.filter((p) => p.is_active && p.stock <= 10));
         })
         .catch((err) => {
           console.error('Failed to fetch low stock alert items:', err);
@@ -118,7 +118,7 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
               {isCritical ? (
                 <>
                   <strong className="text-amber-400 font-semibold">Warehouse Alert:</strong> Detected{' '}
-                  <strong className="text-amber-300 font-semibold">{summary.low_stock_count} SKUs</strong>{' '}
+                  <strong className="text-amber-300 font-semibold">{criticalItems.length} SKUs</strong>{' '}
                   below the safety buffer threshold (≤ 10 units)
                   {lowestItem ? (
                     <>
@@ -161,7 +161,7 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
                 isCritical ? 'text-amber-400' : 'text-slate-200'
               }`}
             >
-              {summary.low_stock_count} Items
+              {criticalItems.length} Items
             </p>
           </div>
           <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
@@ -188,7 +188,7 @@ export const ExecutiveCommandSummary: React.FC<ExecutiveCommandSummaryProps> = (
                 isCritical ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'
               }`}
             >
-              {summary.low_stock_count}
+              {criticalItems.length}
             </span>
           </div>
 

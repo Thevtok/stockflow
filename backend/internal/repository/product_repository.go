@@ -55,7 +55,7 @@ func (r *productRepository) FindAll(filter domain.ProductFilter) ([]domain.Produ
 	case "inactive":
 		query = query.Where("is_active = ?", false)
 	case "low_stock":
-		query = query.Where("stock <= ?", 10)
+		query = query.Where("stock <= ? AND is_active = ?", 10, true)
 	}
 
 	// Count total
