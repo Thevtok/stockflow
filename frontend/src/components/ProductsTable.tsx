@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Search, RefreshCw, AlertCircle, PackageOpen, History, Trash2, SlidersHorizontal } from 'lucide-react';
 import { Product, ProductFilterType } from '../types';
 import { formatCurrency, formatRelativeTime } from '../utils/format';
@@ -67,7 +67,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                 { id: 'all', label: 'All' },
                 { id: 'active', label: 'Active' },
                 { id: 'inactive', label: 'Inactive' },
-                { id: 'low_stock', label: 'Low Stock (â‰¤10)' },
+                { id: 'low_stock', label: 'Low Stock (<= 10)' },
               ] as { id: ProductFilterType; label: string }[]
             ).map((tab) => (
               <button
@@ -75,7 +75,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                 onClick={() => onFilterChange(tab.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   filter === tab.id
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
+                    ? 'bg-slate-800 text-slate-100 font-semibold border border-slate-700 shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -237,7 +237,7 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                     className="hover:bg-slate-850/60 transition-colors group border-b border-slate-800/40"
                   >
                     {/* SKU */}
-                    <td className="px-5 py-4 font-mono font-medium text-emerald-400 text-xs">
+                    <td className="px-5 py-4 font-mono font-semibold text-slate-300 group-hover:text-sky-300 transition-colors text-xs tracking-tight">
                       {p.sku}
                     </td>
 

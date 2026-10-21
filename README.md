@@ -1,4 +1,4 @@
-# StockFlow â€” Inventory & Sales Management (Mini ERP)
+﻿# StockFlow â€” Inventory & Sales Management (Mini ERP)
 
 [![Go Version](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat&logo=go)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql)](https://www.postgresql.org)
@@ -7,6 +7,10 @@
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://www.docker.com)
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-stockflow.kardiahis.id-emerald?style=flat&logo=nginx)](https://stockflow.kardiahis.id)
+
+> 🚀 **Live Demo Available:** [https://stockflow.kardiahis.id](https://stockflow.kardiahis.id)  
+> Fully deployed on a Linux Cloud VPS with automated SSL and single-command Docker Compose.
 StockFlow is an industrial-grade mini ERP inventory and sales ordering module engineered for warehouse supervisors. It provides an end-to-end vertical slice: **PostgreSQL 16 Database â†’ Go API Service (Gin + GORM) â†’ React TypeScript UI (Vite + Tailwind)**, designed with strict concurrency safety, deadlock prevention, atomic transaction rollbacks, and cross-stack error handling.
 
 ---
@@ -295,11 +299,11 @@ curl -X GET "http://localhost:9521/api/reports/daily-sales?date=2026-10-21"
 ## ðŸŒ Production Deployment & Live Demo
 
 StockFlow is containerized and deployed on a Linux Cloud VPS behind an Nginx reverse proxy with automated SSL certificates:
-- **Live Demo URL:** `https://stockflow.kardia.id` (or evaluation domain)
+- **Live Demo URL:** `https://stockflow.kardiahis.id` (or evaluation domain)
 - **Nginx Reverse Proxy Config Snippet:**
   ```nginx
   server {
-      server_name stockflow.kardia.id;
+      server_name stockflow.kardiahis.id;
       location / {
           proxy_pass http://127.0.0.1:9520;
           proxy_set_header Host $host;

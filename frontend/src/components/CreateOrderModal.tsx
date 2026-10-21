@@ -250,7 +250,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                           <option value="">-- Select Product SKU --</option>
                           {activeProducts.map((p) => (
                             <option key={p.id} value={p.sku}>
-                              {p.sku} â€” {p.name} (Stock: {p.stock})
+                              {p.sku} - {p.name} (Stock: {p.stock})
                             </option>
                           ))}
                         </select>

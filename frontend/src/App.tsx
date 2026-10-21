@@ -166,9 +166,8 @@ export const App: React.FC = () => {
             </div>
             <button
               onClick={() => setNotification(null)}
-              className="text-slate-400 hover:text-white ml-3"
-            >
-              Ã—
+              className="text-slate-400 hover:text-white ml-3 text-sm font-bold">
+              &times;
             </button>
           </div>
         )}
@@ -200,8 +199,8 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>StockFlow ERP â€” Built with Go, PostgreSQL, React, and TypeScript.</span>
-          <span className="text-emerald-500/80">Concurrency Safe â€¢ Atomic Order Ledger</span>
+          <span>StockFlow ERP - Built with Go, PostgreSQL, React, and TypeScript.</span>
+          <span className="text-emerald-500/80">Concurrency Safe | Atomic Order Ledger</span>
         </div>
       </footer>
 
@@ -261,3 +260,5 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
+

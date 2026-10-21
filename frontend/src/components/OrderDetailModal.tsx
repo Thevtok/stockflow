@@ -69,7 +69,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                 <span>Created {new Date(order.created_at).toLocaleString('id-ID')}</span>
                 {order.cancelled_at && (
                   <span className="text-rose-400">
-                    â€¢ Cancelled {new Date(order.cancelled_at).toLocaleTimeString('id-ID')}
+                    • Cancelled {new Date(order.cancelled_at).toLocaleTimeString('id-ID')}
                   </span>
                 )}
               </p>
