@@ -1,10 +1,7 @@
-﻿# Build Stage
+# Build Stage
 FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
-
-# Install git and build essentials
-RUN apk add --no-cache git ca-certificates tzdata
 
 # Copy dependency definitions
 COPY go.mod go.sum ./
@@ -21,9 +18,9 @@ FROM alpine:3.20
 
 WORKDIR /app
 
-RUN apk --no-cache add ca-certificates tzdata
+# Copy SSL certificates and timezone directly from builder (Zero apk network calls needed)
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# Set timezone
 ENV TZ=Asia/Jakarta
 
 # Copy compiled binary from builder
