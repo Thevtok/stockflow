@@ -1,4 +1,4 @@
-# Binaries & Build Artifacts
+﻿# Binaries & Build Artifacts
 backend/bin/
 backend/dist/
 backend/tmp/
@@ -10,7 +10,6 @@ backend/*.dylib
 
 # Node / Frontend
 frontend/node_modules/
-frontend/dist/
 frontend/.next/
 frontend/build/
 frontend/*.tsbuildinfo
